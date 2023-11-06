@@ -27,10 +27,12 @@ def query_endpoint(payload, endpoint_name):
 
 
 def generate_text(model, prompt):
-    query_endpoint( {"inputs": prompt,
+    result = query_endpoint( {"inputs": prompt,
         "parameters": {
             "max_new_tokens": 200, "top_p": 0.9, 
             "temperature": 0.01, 
-            "return_full_text": False}
+            "return_full_text": True}
         }, 
         endpoints[model])
+    return  result[0]['generation']
+
