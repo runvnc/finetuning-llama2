@@ -5,6 +5,7 @@ def print_output(model_name, prompt, output):
     print(colored('Model: ', 'blue') + colored(model_name, 'green'))
     print(colored('Prompt: ', 'blue') + colored(prompt, 'yellow'))
     print(colored('Output: ', 'blue') + colored(output, 'cyan'))
+    print()
 
 prompt = "Hi! I'm Jason and I am wondering what I should do today in sunny Athens."
 print_output('llama2-7b', prompt, generate_text('llama2-7b', prompt))
