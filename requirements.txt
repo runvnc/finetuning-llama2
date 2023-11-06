@@ -7,5 +7,5 @@ tokenizers>=0.13.3
 sagemaker
 boto3
 datasets
-langchain.document_loaders
+langchain
 huggingface_hub

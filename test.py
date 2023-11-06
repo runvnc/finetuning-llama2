@@ -1,7 +1,7 @@
 from generate_text import *
 
 prompt = "Hi! I'm Aris and I am wondering what I should do today in sunny Athens."
-print(generate_text(prompt, 'llama2-7b'))
+print(generate_text('llama2-7b', prompt))
 
 # ## LLaMA2 finetuned on NYC summit blogs
 #print(generate_text(prompt, 'llaba2b-13b-tuned'))
