@@ -3,7 +3,10 @@ import boto3
 
 #basic_endpoint_ft = 'llama-2-13b-hf-nyc-finetuned'
 
+# arn:aws:sagemaker:us-east-2:140082756605:endpoint/jumpstart-dft-meta-textgeneration-llama-2-7b
+
 endpoints = {
+    'llama2-7b': 'jumpstart-dft-meta-textgeneration-llama-2-7b',
     'llama2-13b': 'jumpstart-dft-meta-textgeneration-llama-2-13b',
     'llama2-13b-chat': 'jumpstart-dft-meta-textgeneration-llama-2-13b-f'
 }
