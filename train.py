@@ -10,9 +10,11 @@ from huggingface_hub import HfFolder
 import init_sagemaker
 
 
-def fine_tune(training_input_path,
+def fine_tune(s3_path,
               pretrained_model_id="meta-llama/Llama-2-7b-hf",
-              batch_size = 2, lr = 2e-4, instance_type='ml.g5.4xlarge'):
+              batch_size = 2, learning_rate = 2e-4,
+              epochs = 20,
+              instance_type='ml.g5.4xlarge'):
 
     _, _, role = init_sagemaker.init_session()
 
@@ -21,9 +23,9 @@ def fine_tune(training_input_path,
     hyperparameters ={
       'model_id': pretrained_model_id,                  # pre-trained model
       'dataset_path': '/opt/ml/input/data/training',    # path where sagemaker will save training dataset
-      'epochs': 20,                                     # number of training epochs
-      'per_device_train_batch_size': 2,                 # batch size for training
-      'lr': 2e-4,                                       # learning rate used during training
+      'epochs': epochs,                                 # number of training epochs
+      'per_device_train_batch_size': batch_size,        # batch size for training
+      'lr': learning_rate,                              # learning rate used during training
       'hf_token': HfFolder.get_token(),                 # huggingface token to access llama 2
       'merge_weights': True,                            # wether to merge LoRA into the model (needs more memory)
     }
@@ -31,7 +33,7 @@ def fine_tune(training_input_path,
     huggingface_estimator = HuggingFace(
         entry_point          = 'run_clm.py',      # train script
         source_dir           = 'scripts',         # directory which includes all the files needed for training
-        instance_type        = 'ml.g5.4xlarge',   # instances type used for the training job
+        instance_type        = instance_type,     # instances type used for the training job
         instance_count       = 1,                 # the number of instances used for training
         base_job_name        = job_name,          # the name of the training job
         role                 = role,              # Iam role used in training job to access AWS ressources, e.g. S3
@@ -44,11 +46,10 @@ def fine_tune(training_input_path,
     )
 
     # define a data input dictonary with our uploaded s3 uris
-    data = {'training': training_input_path}
+    data = {'training': s3_path}
 
     # starting the train job with our uploaded datasets as input
     huggingface_estimator.fit(data, wait=False)
-
 
     from sagemaker.huggingface import get_huggingface_llm_image_uri
 

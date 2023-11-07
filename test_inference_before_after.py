@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from termcolor import colored
 from generate_text import *
 
