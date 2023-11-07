@@ -74,13 +74,18 @@ def load_from_web(pretrained_modelid = "meta-llama/Llama-2-7b-hf", urls)
     return lm_dataset
 
 #f's3://{sess.default_bucket()}/processed/llama/genai-nyc-summit/train'
-def store_dataset(s3_bucket_path):
+def store_dataset(lm_dataset, s3_bucket_path):
     # save train_dataset to s3
-    training_input_path = sess.default_bucket() + '/' + s3_buck_path
+    training_input_path = sess.default_bucket() + '/' + s3_path
     lm_dataset.save_to_disk(training_input_path)
 
     print("uploaded data to:")
     print(f"training dataset to: {training_input_path}")
+
+
+def store_url_dataset(pretrained_model_id, s3_path, urls):
+   dataset = load_from_web(pretrained_model_id, urls)
+   store_dataset(dataset, s3_path)
 
 
 ignore = """
