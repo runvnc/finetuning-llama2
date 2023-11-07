@@ -12,79 +12,10 @@ from transformers import AutoTokenizer
 from sagemaker.huggingface import HuggingFace, HuggingFaceModel
 from huggingface_hub import HfFolder
 
-
-sess = sagemaker.Session()
-# sagemaker session bucket -> used for uploading data, models and logs
-# sagemaker will automatically create this bucket if it not exists
-sagemaker_session_bucket=None
-if sagemaker_session_bucket is None and sess is not None:
-    # set to default bucket if a bucket name is not given
-    sagemaker_session_bucket = sess.default_bucket()
-
-try:
-    role = sagemaker.get_execution_role()
-except ValueError:
-    iam = boto3.client('iam')
-    role = iam.get_role(RoleName='sagemaker_execution_role')['Role']['Arn']
-
-sess = sagemaker.Session(default_bucket=sagemaker_session_bucket)
-
-print(f"sagemaker role arn: {role}")
-print(f"sagemaker bucket: {sess.default_bucket()}")
-print(f"sagemaker session region: {sess.boto_region_name}")
-
-
-# # Data retrieval
-
-# In[12]:
-
-
-loader = WebBaseLoader(["https://aws.amazon.com/blogs/aws/preview-enable-foundation-models-to-complete-tasks-with-agents-for-amazon-bedrock/", "https://aws.amazon.com/blogs/aws/aws-entity-resolution-match-and-link-related-records-from-multiple-applications-and-data-stores/", "https://aws.amazon.com/blogs/database/the-role-of-vector-datastores-in-generative-ai-applications/", "https://aws.amazon.com/blogs/big-data/introducing-the-vector-engine-for-amazon-opensearch-serverless-now-in-preview/", "https://aws.amazon.com/blogs/big-data/build-data-integration-jobs-with-ai-companion-on-aws-glue-studio-notebook-powered-by-amazon-codewhisperer/", "https://aws.amazon.com/blogs/aws/new-amazon-ec2-p5-instances-powered-by-nvidia-h100-tensor-core-gpus-for-accelerating-generative-ai-and-hpc-applications/"])
-
-
-# In[13]:
-
-
-data = loader.load()
-data
-
-
-# # Data processing
-
-# In[14]:
-
+from init_sagemaker import *
 
 def strip_spaces(doc):
     return {"text": doc.page_content.replace("  ", "")}
-
-
-# In[15]:
-
-
-stripped_data = list(map(strip_spaces, data))
-stripped_data
-
-
-# In[16]:
-
-
-dataset = Dataset.from_list(stripped_data)
-dataset
-
-
-# In[17]:
-
-
-model_id = "meta-llama/Llama-2-13b-hf" # sharded weights
-tokenizer = AutoTokenizer.from_pretrained(model_id,use_auth_token=True)
-tokenizer.pad_token = tokenizer.eos_token
-
-
-# In[18]:
-
-
-# empty list to save remainder from batches to use in next batch
-remainder = {"input_ids": [], "attention_mask": [], "token_type_ids": []}
 
 def chunk(sample, chunk_length=2048):
     # define global remainder variable to save remainder from batches to use in next batch
@@ -110,46 +41,50 @@ def chunk(sample, chunk_length=2048):
     result["labels"] = result["input_ids"].copy()
     return result
 
-
-# tokenize and chunk dataset
-lm_dataset = dataset.map(
-    lambda sample: tokenizer(sample["text"]), batched=True, remove_columns=list(dataset.features)
-).map(
-    partial(chunk, chunk_length=4096),
-    batched=True,
-)
-
-
-# Print total number of samples
-print(f"Total number of training samples: {len(lm_dataset)}")
-
-
-# In[19]:
-
-
 def sum_dataset_arrays(dataset):
     total = 0
     for i in range(0,8):
         total = total + len(lm_dataset[i]['input_ids'])
     return total
-print(f"Total number of training tokens: {sum_dataset_arrays(lm_dataset)}")
+
+def load_from_web(pretrained_modelid = "meta-llama/Llama-2-7b-hf", urls)
+    loader = WebBaseLoader(urls)
+
+    data = loader.load()
+
+    stripped_data = list(map(strip_spaces, data))
+
+    dataset = Dataset.from_list(stripped_data)
+
+    tokenizer = AutoTokenizer.from_pretrained(model_id, use_auth_token=True)
+    tokenizer.pad_token = tokenizer.eos_token
+
+    # empty list to save remainder from batches to use in next batch
+    remainder = {"input_ids": [], "attention_mask": [], "token_type_ids": []}
+
+    lm_dataset = dataset.map(
+        lambda sample: tokenizer(sample["text"]), batched=True, remove_columns=list(dataset.features)
+    ).map(
+        partial(chunk, chunk_length=4096),
+        batched=True,
+    )
+
+    print(f"Total number of training samples: {len(lm_dataset)}")
+    print(f"Total number of training tokens: {sum_dataset_arrays(lm_dataset)}")
+    return lm_dataset
+
+#f's3://{sess.default_bucket()}/processed/llama/genai-nyc-summit/train'
+def store_dataset(s3_bucket_path):
+    # save train_dataset to s3
+    training_input_path = sess.default_bucket() + '/' + s3_buck_path
+    lm_dataset.save_to_disk(training_input_path)
+
+    print("uploaded data to:")
+    print(f"training dataset to: {training_input_path}")
 
 
-# In[ ]:
-
-
-# save train_dataset to s3
-training_input_path = f's3://{sess.default_bucket()}/processed/llama/genai-nyc-summit/train'
-lm_dataset.save_to_disk(training_input_path)
-
-print("uploaded data to:")
-print(f"training dataset to: {training_input_path}")
-
-
+ignore = """
 # # Fine-tuning
-
-# In[ ]:
-
 
 # define Training Job Name
 job_name = f'huggingface-qlora-{model_id.replace("/", "-")}-{time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())}'
@@ -182,8 +117,6 @@ huggingface_estimator = HuggingFace(
 )
 
 
-# In[ ]:
-
 
 # define a data input dictonary with our uploaded s3 uris
 data = {'training': training_input_path}
@@ -191,10 +124,6 @@ data = {'training': training_input_path}
 # starting the train job with our uploaded datasets as input
 huggingface_estimator.fit(data, wait=False)
 
-
-# # Deployment
-
-# In[ ]:
 
 
 from sagemaker.huggingface import get_huggingface_llm_image_uri
@@ -208,8 +137,6 @@ llm_image = get_huggingface_llm_image_uri(
 # print ecr image uri
 print(f"llm image uri: {llm_image}")
 
-
-# In[ ]:
 
 
 # sagemaker config
@@ -236,9 +163,6 @@ llm_model = HuggingFaceModel(
 )
 
 
-# In[ ]:
-
-
 # Deploy model to an endpoint
 # https://sagemaker.readthedocs.io/en/stable/api/inference/model.html#sagemaker.model.Model.deploy
 llm = llm_model.deploy(
@@ -249,198 +173,6 @@ llm = llm_model.deploy(
   # volume_size=400, # If using an instance with local SSD storage, volume_size must be None, e.g. p4 but not p3
   container_startup_health_check_timeout=health_check_timeout, # 10 minutes to be able to load the model
 )
-
-
-# # Inference
-
-# In[33]:
-
-
-basic_endpoint = 'jumpstart-dft-meta-textgeneration-llama-2-13b' 
-basic_endpoint_ft = 'llama-2-13b-hf-nyc-finetuned'
-chat_endpoint = 'jumpstart-dft-meta-textgeneration-llama-2-13b-f'
-chat_endpoint_ft = 'llama-2-13b-chat-hf-nyc-finetuned'
-
-
-# In[34]:
-
-
-def query_endpoint(payload, endpoint_name):
-    client = boto3.client("sagemaker-runtime")
-    response = client.invoke_endpoint(
-        EndpointName=endpoint_name,
-        ContentType="application/json",
-        Body=json.dumps(payload),
-        CustomAttributes="accept_eula=true",
-    )
-    response = response["Body"].read().decode("utf8")
-    response = json.loads(response)
-    return response
-
-
-# # Base vs. chat model
-# ## LLaMA2 
-
-# In[35]:
-
-
-prompt = "Hi! I'm Aris and I am wondering what I should do today in sunny Athens."
-print(f'{basic_endpoint}: {query_endpoint({"inputs": prompt, "parameters": {"max_new_tokens": 200, "top_p": 0.9, "temperature": 0.01, "return_full_text": False}}, basic_endpoint)}')
-
-
-# ## LLaMA2 finetuned on NYC summit blogs
-
-# In[36]:
-
-
-prompt = "Hi! I'm Aris and I am wondering what I should do today in sunny Athens."
-print(f'{basic_endpoint_ft}: {query_endpoint({"inputs": prompt, "parameters": {"max_new_tokens": 200, "top_p": 0.9, "temperature": 0.01, "return_full_text": False}}, basic_endpoint_ft)}')
-
-
-# ## LLaMA2-chat
-
-# In[38]:
-
-
-prompt = "Hi! I'm Aris and I am wondering what I should do today in sunny Athens."
-print(f'{chat_endpoint}: {query_endpoint({"inputs": [[{"role": "user", "content": prompt}]], "parameters": {"max_new_tokens": 200, "top_p": 0.9, "temperature": 0.01}}, chat_endpoint)}')
-
-
-# ## LLaMA2-chat finetuned on NYC summit blogs
-
-# In[39]:
-
-
-prompt = "Hi! I'm Aris and I am wondering what I should do today in sunny Athens."
-print(f'{chat_endpoint_ft}: {query_endpoint({"inputs": json.dumps([[{"role": "user", "content": prompt}]]), "parameters": {"max_new_tokens": 200, "top_p": 0.9, "temperature": 0.01}}, chat_endpoint_ft)}')
-
-
-# In[40]:
-
-
-prompt = "<s> [INST] Hi! I'm Aris and I am wondering what I should do today in sunny Athens. [/INST]"
-print(f'{chat_endpoint_ft}: {query_endpoint({"inputs": prompt, "parameters": {"max_new_tokens": 200, "top_p": 0.9, "temperature": 0.01}}, chat_endpoint_ft)}')
-
-
-# # Do the different models know what P5 instances are?
-# ## LLaMA2-13b 
-
-# In[27]:
-
-
-prompt = "Amazon EC2 P5 instances are equipped with GPUs of the type"
-print(f'{basic_endpoint}: {query_endpoint({"inputs": prompt, "parameters": {"max_new_tokens": 200, "top_p": 0.9, "temperature": 0.01, "return_full_text": False}}, basic_endpoint)}')
-
-
-# ## LLaMA2-13b finetuned on NYC summit blogs
-
-# In[29]:
-
-
-prompt = "Amazon EC2 P5 instances are equipped with GPUs of the type"
-print(f'{basic_endpoint_ft}: {query_endpoint({"inputs": prompt, "parameters": {"max_new_tokens": 200, "top_p": 0.9, "temperature": 0.01, "return_full_text": False}}, basic_endpoint_ft)}')
-
-
-# ## LLaMA2-13b-chat
-
-# In[30]:
-
-
-prompt = "What are Amazon EC2 P5 instances? Which kind of GPUs are they equipped with?"
-print(f'{chat_endpoint}: {query_endpoint({"inputs": [[{"role": "user", "content": prompt}]], "parameters": {"max_new_tokens": 200, "top_p": 0.9, "temperature": 0.01}}, chat_endpoint)}')
-
-
-# ## LLaMA2-13b-chat finetuned on NYC summit blogs
-
-# In[31]:
-
-
-prompt = "What are Amazon EC2 P5 instances? Which kind of GPUs are they equipped with?"
-print(f'{chat_endpoint_ft}: {query_endpoint({"inputs": json.dumps([[{"role": "user", "content": prompt}]]), "parameters": {"max_new_tokens": 200, "top_p": 0.9, "temperature": 0.01, "return_full_text": False}}, chat_endpoint_ft)}')
-
-
-# In[41]:
-
-
-prompt = "<s> [INST] What are Amazon EC2 P5 instances? Which kind of GPUs are they equipped with? [/INST]"
-print(f'{chat_endpoint_ft}: {query_endpoint({"inputs": prompt, "parameters": {"max_new_tokens": 200, "top_p": 0.9, "temperature": 0.01, "return_full_text": False}}, chat_endpoint_ft)}')
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-prompt = """
-Blogpost conclusion: 
-In conclusion, this blog post delves into the critical process of infusing domain-specific knowledge into large language models (LLMs) like LLaMA2, emphasizing the importance of addressing challenges related to helpfulness, honesty, and harmlessness when designing LLM-powered applications for enterprise-grade quality. The primary focus here is on the parametric approach to fine-tuning, which efficiently injects niche expertise into foundation models without compromising their general linguistic capabilities.The blog highlights the steps involved in fine-tuning LLaMA2 using parameter-efficient fine-tuning techniques, such as the qLoRA approach, and how this process can be conducted on Amazon SageMaker. By adopting this approach, practitioners can adapt LLaMA2 to specific domains, ensuring that the models remain up-to-date with recent knowledge even beyond their original training data. The article also underscores the versatility of this approach, showing that it can be applied to models like LLaMA2-chat, which have already undergone task-specific fine-tuning. This opens up opportunities to infuse knowledge into LLMs without the need for extensive instruction or chat-based fine-tuning, preserving their task-specific nature.
-Task: 
-Please extract the main takeaways from this blogpost.
 """
-
-print(f'{chat_endpoint}: {query_endpoint({"inputs": [[{"role": "user", "content": prompt}]], "parameters": {"max_new_tokens": 200, "top_p": 0.9, "temperature": 0.01}}, chat_endpoint)}')
-
-
-# In[ ]:
-
-
 
 
