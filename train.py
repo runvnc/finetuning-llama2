@@ -47,7 +47,7 @@ def sum_dataset_arrays(dataset):
         total = total + len(lm_dataset[i]['input_ids'])
     return total
 
-def load_from_web(pretrained_modelid = "meta-llama/Llama-2-7b-hf", urls)
+def load_from_web(urls, pretrained_modelid = "meta-llama/Llama-2-7b-hf"):
     loader = WebBaseLoader(urls)
 
     data = loader.load()
