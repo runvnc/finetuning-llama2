@@ -47,7 +47,7 @@ def sum_dataset_arrays(dataset):
         total = total + len(lm_dataset[i]['input_ids'])
     return total
 
-def load_from_web(urls, pretrained_modelid = "meta-llama/Llama-2-7b-hf"):
+def load_from_web(urls, model_id = "meta-llama/Llama-2-7b-hf"):
     loader = WebBaseLoader(urls)
 
     data = loader.load()
@@ -84,7 +84,7 @@ def store_dataset(lm_dataset, s3_bucket_path):
 
 
 def store_url_dataset(pretrained_model_id, s3_path, urls):
-   dataset = load_from_web(pretrained_model_id, urls)
+   dataset = load_from_web(urls, pretrained_model_id)
    store_dataset(dataset, s3_path)
 
 
