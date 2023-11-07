@@ -12,7 +12,7 @@ from transformers import AutoTokenizer
 from sagemaker.huggingface import HuggingFace, HuggingFaceModel
 from huggingface_hub import HfFolder
 
-from init_sagemaker import *
+import init_sagemaker
 
 def strip_spaces(doc):
     return {"text": doc.page_content.replace("  ", "")}
@@ -41,7 +41,7 @@ def chunk(sample, chunk_length=2048):
     result["labels"] = result["input_ids"].copy()
     return result
 
-def sum_dataset_arrays(dataset):
+def sum_dataset_arrays(lm_dataset):
     total = 0
     for i in range(0,8):
         total = total + len(lm_dataset[i]['input_ids'])
@@ -59,9 +59,6 @@ def load_from_web(urls, model_id = "meta-llama/Llama-2-7b-hf"):
     tokenizer = AutoTokenizer.from_pretrained(model_id, use_auth_token=True)
     tokenizer.pad_token = tokenizer.eos_token
 
-    # empty list to save remainder from batches to use in next batch
-    remainder = {"input_ids": [], "attention_mask": [], "token_type_ids": []}
-
     lm_dataset = dataset.map(
         lambda sample: tokenizer(sample["text"]), batched=True, remove_columns=list(dataset.features)
     ).map(
@@ -74,7 +71,7 @@ def load_from_web(urls, model_id = "meta-llama/Llama-2-7b-hf"):
     return lm_dataset
 
 #f's3://{sess.default_bucket()}/processed/llama/genai-nyc-summit/train'
-def store_dataset(lm_dataset, s3_bucket_path):
+def store_dataset(sess, lm_dataset, s3_path):
     # save train_dataset to s3
     training_input_path = sess.default_bucket() + '/' + s3_path
     lm_dataset.save_to_disk(training_input_path)
@@ -84,8 +81,13 @@ def store_dataset(lm_dataset, s3_bucket_path):
 
 
 def store_url_dataset(pretrained_model_id, s3_path, urls):
-   dataset = load_from_web(urls, pretrained_model_id)
-   store_dataset(dataset, s3_path)
+    global remainder
+    # empty list to save remainder from batches to use in next batch
+    remainder = {"input_ids": [], "attention_mask": [], "token_type_ids": []}
+
+    dataset = load_from_web(urls, pretrained_model_id)
+    (sess, llm_image, role)  = init_sagemaker.init_session()
+    store_dataset(sess, dataset, s3_path)
 
 
 ignore = """

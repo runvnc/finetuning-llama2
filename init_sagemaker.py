@@ -13,7 +13,7 @@ from sagemaker.huggingface import HuggingFace, HuggingFaceModel
 from huggingface_hub import HfFolder
 
 
-def init():
+def init_session():
 	sess = sagemaker.Session()
 	# sagemaker session bucket -> used for uploading data, models and logs
 	# sagemaker will automatically create this bucket if it not exists
@@ -45,6 +45,6 @@ def init():
 	# print ecr image uri
 	print(f"llm image uri: {llm_image}")
 
-	return (llm_image, role)
+	return (sess, llm_image, role)
 
 
