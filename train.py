@@ -1,29 +1,27 @@
 import sagemaker
-import boto3
 import time
 import json
 
 from datasets import Dataset
 from langchain.document_loaders import WebBaseLoader
-from random import randint
-from itertools import chain
-from functools import partial
-from transformers import AutoTokenizer
-from sagemaker.huggingface import HuggingFace, HuggingFaceModel
+from sagemaker.huggingface import HuggingFace 
 from huggingface_hub import HfFolder
 
 import init_sagemaker
 
-# # Fine-tuning
 
-def train(model_id, batch_size = 2, lr = 2e-4, instance_type='ml.g5.4xlarge'):
+def fine_tune(training_input_path,
+              pretrained_model_id="meta-llama/Llama-2-7b-hf",
+              batch_size = 2, lr = 2e-4, instance_type='ml.g5.4xlarge'):
+
+    _, _, role = init_sagemaker.init_session()
 
     job_name = f'huggingface-qlora-{model_id.replace("/", "-")}-{time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())}'
 
     hyperparameters ={
-      'model_id': model_id,                             # pre-trained model
+      'model_id': pretrained_model_id,                  # pre-trained model
       'dataset_path': '/opt/ml/input/data/training',    # path where sagemaker will save training dataset
-      'epochs': 20,                                      # number of training epochs
+      'epochs': 20,                                     # number of training epochs
       'per_device_train_batch_size': 2,                 # batch size for training
       'lr': 2e-4,                                       # learning rate used during training
       'hf_token': HfFolder.get_token(),                 # huggingface token to access llama 2
@@ -63,3 +61,4 @@ def train(model_id, batch_size = 2, lr = 2e-4, instance_type='ml.g5.4xlarge'):
     print(f"llm image uri: {llm_image}")
 
     return llm_image
+

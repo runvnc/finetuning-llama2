@@ -75,8 +75,7 @@ def store_dataset(sess, lm_dataset, s3_path):
     training_input_path = sess.default_bucket() + '/' + s3_path
     lm_dataset.save_to_disk(training_input_path)
 
-    print("uploaded data to:")
-    print(f"training dataset to: {training_input_path}")
+    print(f"Uploaded training dataset to: {training_input_path}")
 
 
 def store_url_dataset(pretrained_model_id, s3_path, urls):

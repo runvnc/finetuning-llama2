@@ -45,6 +45,4 @@ def init_session():
 	# print ecr image uri
 	print(f"llm image uri: {llm_image}")
 
-	return (sess, llm_image, role)
-
-
+	return sess, llm_image, role
