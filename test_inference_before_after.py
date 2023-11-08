@@ -10,13 +10,24 @@ def print_output(model_name, prompt, output):
     print()
 
 prompt = "Hi! I'm Jason and I am wondering what I should do today in sunny Athens."
+
 print_output('llama2-7b', prompt, generate_text('llama2-7b', prompt))
 
-print_output('awsarticles5', prompt, generate_text('awsarticles5', prompt))
+print_output('awsarticles24', prompt, generate_text('awsarticles24', prompt))
 
 
-prompt = "Amazon EC2 P5 instances are equipped with GPUs of the type"
+prompt = "Amazon EC2 P5 instances are equipped with GPUs of the type "
+
 print_output('llama2-7b', prompt, generate_text('llama2-7b', prompt))
+
+print_output('awsarticles24', prompt, generate_text('awsarticles24', prompt))
+
+
+prompt = "Agents for Amazon Bedrock automate the"
+
+print_output('llama2-7b', prompt, generate_text('llama2-7b', prompt))
+
+print_output('awsarticles24', prompt, generate_text('awsarticles24', prompt))
 
 
 ## LLaMA2-13b-chat

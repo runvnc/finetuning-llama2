@@ -8,9 +8,6 @@ import json
 
 endpoints = {
     'llama2-7b': 'jumpstart-dft-meta-textgeneration-llama-2-7b',
-    'awsarticles5': 'awsarticles5',
-    'llama2-13b': 'jumpstart-dft-meta-textgeneration-llama-2-13b',
-    'llama2-13b-chat': 'jumpstart-dft-meta-textgeneration-llama-2-13b-f'
 }
 
 
@@ -28,12 +25,22 @@ def query_endpoint(payload, endpoint_name):
 
 
 def generate_text(model, prompt):
+    if model in endpoints:
+        endpoint = endpoints[model]
+    else:
+        endpoint = model
     result = query_endpoint( {"inputs": prompt,
         "parameters": {
-            "max_new_tokens": 200, "top_p": 0.9, 
-            "temperature": 0.01, 
+            "max_new_tokens": 100,
+            "temperature": 0.01,
+            "top_p": 0.9,
             "return_full_text": True}
         }, 
-        endpoints[model])
-    return  result[0]['generation']
+        endpoint)
+    if 'generation' in result[0]:
+        # 0.8.2
+        return result[0]['generation']
+    else:
+        # 0.9.3
+        return result[0]['generated_text']
 
