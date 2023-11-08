@@ -10,7 +10,7 @@ import init_sagemaker
 def deploy_tgi_model_from_url(model_data, endpoint_name, instance_type = "ml.g5.12xlarge",
           number_of_gpu = 4, health_check_timeout = 300):
 
-    (llm_image, sess, role) = init_sagemaker.init_session()
+    (sess, llm_image, role) = init_sagemaker.init_session()
     
     TGI_config = {
         'HF_MODEL_ID': "/opt/ml/model", # path to where sagemaker stores the model
@@ -26,7 +26,9 @@ def deploy_tgi_model_from_url(model_data, endpoint_name, instance_type = "ml.g5.
 	  model_data=model_data,
 	  env=TGI_config
 	)
+    print( { 'role': role, 'image_uri': llm_image, 'model_data': model_data, 'env': TGI_config } )    
 
+    print( { 'model_data': model_data, 'endpoint_name': endpoint_name, 'instance_type': instance_type })
     llm = llm_model.deploy(
 	  endpoint_name=endpoint_name,
 	  initial_instance_count=1,
