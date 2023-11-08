@@ -6,29 +6,29 @@ import json
 from sagemaker.huggingface import HuggingFaceModel
 
 import init_sagemaker
+ 
+def deploy_tgi_model_from_url(model_data, endpoint_name, instance_type = "ml.g5.12xlarge",
+          number_of_gpu = 4, health_check_timeout = 300):
 
-def deploy(model_data, endpoint_name, instance_type = "ml.g5.12xlarge",
-           number_of_gpu = 4, health_check_timeout = 300):
-
-	(llm_image, sess, role) = init_sagemaker.init_session()
+    (llm_image, sess, role) = init_sagemaker.init_session()
     
     TGI_config = {
-      'HF_MODEL_ID': "/opt/ml/model", # path to where sagemaker stores the model
-      'SM_NUM_GPUS': json.dumps(number_of_gpu), # Number of GPU used per replica
-      'MAX_INPUT_LENGTH': json.dumps(1024), 
-      'MAX_TOTAL_TOKENS': json.dumps(2048), 
-      # 'HF_MODEL_QUANTIZE': "bitsandbytes", # comment in to quantize
-    }
+        'HF_MODEL_ID': "/opt/ml/model", # path to where sagemaker stores the model
+        'SM_NUM_GPUS': json.dumps(number_of_gpu), # Number of GPU used per replica
+        'MAX_INPUT_LENGTH': json.dumps(1024), 
+        'MAX_TOTAL_TOKENS': json.dumps(2048), 
+        }
+    # 'HF_MODEL_QUANTIZE': "bitsandbytes", # comment in to quantize
 	
-	llm_model = HuggingFaceModel(
+    llm_model = HuggingFaceModel(
 	  role=role,
 	  image_uri=llm_image,
 	  model_data=model_data,
 	  env=TGI_config
 	)
 
-	llm = llm_model.deploy(
-	  endpoint_name,
+    llm = llm_model.deploy(
+	  endpoint_name=endpoint_name,
 	  initial_instance_count=1,
 	  instance_type=instance_type,
 	  # volume_size=400, # If using an instance with local SSD storage, volume_size must be None, e.g. p4 but not p3
