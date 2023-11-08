@@ -9,3 +9,4 @@ boto3
 datasets
 langchain
 huggingface_hub
+s3fs

@@ -16,9 +16,9 @@ def fine_tune(s3_path,
               epochs = 20,
               instance_type='ml.g5.4xlarge'):
 
-    _, _, role = init_sagemaker.init_session()
+    sess, _, role = init_sagemaker.init_session()
 
-    job_name = f'huggingface-qlora-{model_id.replace("/", "-")}-{time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())}'
+    job_name = f'huggingface-qlora-{pretrained_model_id.replace("/", "-")}-{time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())}'
 
     hyperparameters ={
       'model_id': pretrained_model_id,                  # pre-trained model
@@ -46,7 +46,9 @@ def fine_tune(s3_path,
     )
 
     # define a data input dictonary with our uploaded s3 uris
-    data = {'training': s3_path}
+    full_s3_path = 's3://' + sess.default_bucket() + '/' + s3_path
+ 
+    data = {'training': full_s3_path}
 
     # starting the train job with our uploaded datasets as input
     huggingface_estimator.fit(data, wait=False)
