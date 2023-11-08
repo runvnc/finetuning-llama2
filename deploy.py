@@ -28,12 +28,12 @@ def deploy_tgi_model_from_url(model_data, endpoint_name, instance_type = "ml.g5.
 	)
     print( { 'role': role, 'image_uri': llm_image, 'model_data': model_data, 'env': TGI_config } )    
 
-    print( { 'model_data': model_data, 'endpoint_name': endpoint_name, 'instance_type': instance_type })
+    print( { 'endpoint_name': endpoint_name, 'instance_type': instance_type })
     llm = llm_model.deploy(
 	  endpoint_name=endpoint_name,
 	  initial_instance_count=1,
 	  instance_type=instance_type,
-	  # volume_size=400, # If using an instance with local SSD storage, volume_size must be None, e.g. p4 but not p3
+	  #volume_size=100, # If using an instance with local SSD storage, volume_size must be None, e.g. p4 but not p3
 	  container_startup_health_check_timeout=health_check_timeout, # 10 minutes to be able to load the model
 	)
 

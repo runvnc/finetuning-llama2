@@ -8,6 +8,7 @@ import json
 
 endpoints = {
     'llama2-7b': 'jumpstart-dft-meta-textgeneration-llama-2-7b',
+    'awsarticles5': 'awsarticles5',
     'llama2-13b': 'jumpstart-dft-meta-textgeneration-llama-2-13b',
     'llama2-13b-chat': 'jumpstart-dft-meta-textgeneration-llama-2-13b-f'
 }

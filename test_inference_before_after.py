@@ -12,11 +12,9 @@ def print_output(model_name, prompt, output):
 prompt = "Hi! I'm Jason and I am wondering what I should do today in sunny Athens."
 print_output('llama2-7b', prompt, generate_text('llama2-7b', prompt))
 
-#prompt = "Hi! I'm Aris and I am wondering what I should do today in sunny Athens."
-#prompt = "<s> [INST] Hi! I'm Aris and I am wondering what I should do today in sunny Athens. [/INST]"
+print_output('awsarticles5', prompt, generate_text('awsarticles5', prompt))
 
 
-# ## LLaMA2-13b 
 prompt = "Amazon EC2 P5 instances are equipped with GPUs of the type"
 print_output('llama2-7b', prompt, generate_text('llama2-7b', prompt))
 

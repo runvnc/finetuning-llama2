@@ -11,9 +11,7 @@ from transformers import (
 )
 from datasets import load_from_disk
 import torch
-
-import bitsandbytes as bnb
-from huggingface_hub import login, HfFolder
+from peft import PeftConfig, PeftModel
 
 
 def parse_arge():
@@ -23,30 +21,20 @@ def parse_arge():
     parser.add_argument(
         "--model_id",
         type=str,
+        default="google/flan-t5-xl",
         help="Model id to use for training.",
     )
-    parser.add_argument(
-        "--dataset_path", type=str, default="lm_dataset", help="Path to dataset."
-    )
-    parser.add_argument(
-        "--hf_token", type=str, default=HfFolder.get_token(), help="Path to dataset."
-    )
+    parser.add_argument("--dataset_path", type=str, default="lm_dataset", help="Path to dataset.")
     # add training hyperparameters for epochs, batch size, learning rate, and seed
-    parser.add_argument(
-        "--epochs", type=int, default=3, help="Number of epochs to train for."
-    )
+    parser.add_argument("--epochs", type=int, default=3, help="Number of epochs to train for.")
     parser.add_argument(
         "--per_device_train_batch_size",
         type=int,
         default=1,
         help="Batch size to use for training.",
     )
-    parser.add_argument(
-        "--lr", type=float, default=5e-5, help="Learning rate to use for training."
-    )
-    parser.add_argument(
-        "--seed", type=int, default=42, help="Seed to use for training."
-    )
+    parser.add_argument("--lr", type=float, default=5e-5, help="Learning rate to use for training.")
+    parser.add_argument("--seed", type=int, default=42, help="Seed to use for training.")
     parser.add_argument(
         "--gradient_checkpointing",
         type=bool,
@@ -65,94 +53,37 @@ def parse_arge():
         default=True,
         help="Whether to merge LoRA weights with base model.",
     )
-    args, _ = parser.parse_known_args()
-
-    if args.hf_token:
-        print(f"Logging into the Hugging Face Hub with token {args.hf_token[:10]}...")
-        login(token=args.hf_token)
-
+    args = parser.parse_known_args()
     return args
 
 
-# COPIED FROM https://github.com/artidoro/qlora/blob/main/qlora.py
-def print_trainable_parameters(model, use_4bit=False):
-    """
-    Prints the number of trainable parameters in the model.
-    """
-    trainable_params = 0
-    all_param = 0
-    for _, param in model.named_parameters():
-        num_params = param.numel()
-        # if using DS Zero 3 and the weights are initialized empty
-        if num_params == 0 and hasattr(param, "ds_numel"):
-            num_params = param.ds_numel
-
-        all_param += num_params
-        if param.requires_grad:
-            trainable_params += num_params
-    if use_4bit:
-        trainable_params /= 2
-    print(
-        f"all params: {all_param:,d} || trainable params: {trainable_params:,d} || trainable%: {100 * trainable_params / all_param}"
-    )
-
-
-# COPIED FROM https://github.com/artidoro/qlora/blob/main/qlora.py
-def find_all_linear_names(model):
-    lora_module_names = set()
-    for name, module in model.named_modules():
-        if isinstance(module, bnb.nn.Linear4bit):
-            names = name.split(".")
-            lora_module_names.add(names[0] if len(names) == 1 else names[-1])
-
-    if "lm_head" in lora_module_names:  # needed for 16-bit
-        lora_module_names.remove("lm_head")
-    return list(lora_module_names)
-
-
-def create_peft_model(model, gradient_checkpointing=True, bf16=True):
+def create_peft_config(model, gradient_checkpointing=True):
     from peft import (
         get_peft_model,
         LoraConfig,
         TaskType,
         prepare_model_for_kbit_training,
     )
-    from peft.tuners.lora import LoraLayer
-
-    # prepare int-4 model for training
-    model = prepare_model_for_kbit_training(
-        model, use_gradient_checkpointing=gradient_checkpointing
-    )
-    if gradient_checkpointing:
-        model.gradient_checkpointing_enable()
-
-    # get lora target modules
-    modules = find_all_linear_names(model)
-    print(f"Found {len(modules)} modules to quantize: {modules}")
 
     peft_config = LoraConfig(
         r=64,
         lora_alpha=16,
-        target_modules=modules,
+        target_modules=[
+            "query_key_value",
+            "dense",
+            "dense_h_to_4h",
+            "dense_4h_to_h",
+        ],
         lora_dropout=0.1,
         bias="none",
         task_type=TaskType.CAUSAL_LM,
     )
 
+    # prepare int-4 model for training
+    model = prepare_model_for_kbit_training(model)
+    if gradient_checkpointing:
+        model.gradient_checkpointing_enable()
     model = get_peft_model(model, peft_config)
-
-    # pre-process the model by upcasting the layer norms in float 32 for
-    for name, module in model.named_modules():
-        if isinstance(module, LoraLayer):
-            if bf16:
-                module = module.to(torch.bfloat16)
-        if "norm" in name:
-            module = module.to(torch.float32)
-        if "lm_head" in name or "embed_tokens" in name:
-            if hasattr(module, "weight"):
-                if bf16 and module.weight.dtype == torch.float32:
-                    module = module.to(torch.bfloat16)
-
     model.print_trainable_parameters()
     return model
 
@@ -172,22 +103,20 @@ def training_function(args):
 
     model = AutoModelForCausalLM.from_pretrained(
         args.model_id,
-        use_cache=False
-        if args.gradient_checkpointing
-        else True,  # this is needed for gradient checkpointing
+        use_cache=False if args.gradient_checkpointing else True,  # this is needed for gradient checkpointing
+        trust_remote_code=True,  # ATTENTION: This allows remote code execution
         device_map="auto",
         quantization_config=bnb_config,
     )
 
     # create peft config
-    model = create_peft_model(
-        model, gradient_checkpointing=args.gradient_checkpointing, bf16=args.bf16
-    )
+    model = create_peft_config(model, args.gradient_checkpointing)
 
     # Define training args
-    output_dir = "./tmp/llama2"
+    output_dir = "/tmp"
     training_args = TrainingArguments(
         output_dir=output_dir,
+        overwrite_output_dir=True,
         per_device_train_batch_size=args.per_device_train_batch_size,
         bf16=args.bf16,  # Use BF16 if available
         learning_rate=args.lr,
@@ -208,10 +137,14 @@ def training_function(args):
         data_collator=default_data_collator,
     )
 
+    # pre-process the model by upcasting the layer norms in float 32 for
+    for name, module in trainer.model.named_modules():
+        if "norm" in name:
+            module = module.to(torch.float32)
+
     # Start training
     trainer.train()
 
-    sagemaker_save_dir="/opt/ml/model/"
     if args.merge_weights:
         # merge adapter weights with base model and save
         # save int 4 model
@@ -224,28 +157,26 @@ def training_function(args):
         from peft import AutoPeftModelForCausalLM
 
         # load PEFT model in fp16
+        offload_folder = "/tmp/offload"
         model = AutoPeftModelForCausalLM.from_pretrained(
             output_dir,
-            low_cpu_mem_usage=True,
+            device_map="auto",
             torch_dtype=torch.float16,
+            offload_folder=offload_folder, # offload to disk if model is to big)
         )  
         # Merge LoRA and base model and save
-        model = model.merge_and_unload()        
-        model.save_pretrained(
-            sagemaker_save_dir, safe_serialization=True, max_shard_size="2GB"
-        )
+        merged_model = model.merge_and_unload()
+        merged_model.save_pretrained("/opt/ml/model/",safe_serialization=True)
     else:
-        trainer.model.save_pretrained(
-            sagemaker_save_dir, safe_serialization=True
-        )
+        trainer.model.save_pretrained("/opt/ml/model/", safe_serialization=True)
 
     # save tokenizer for easy inference
     tokenizer = AutoTokenizer.from_pretrained(args.model_id)
-    tokenizer.save_pretrained(sagemaker_save_dir)
+    tokenizer.save_pretrained("/opt/ml/model/")
 
 
 def main():
-    args = parse_arge()
+    args, _ = parse_arge()
     training_function(args)
 
 
