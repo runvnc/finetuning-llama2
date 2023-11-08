@@ -1,1 +1,1 @@
-s3://sagemaker-us-east-2-140082756605/huggingface-qlora-meta-llama-Llama-2-7b-2023-11-08-01-57-21-853/output/model.tar.gz
+https://us-east-2.console.aws.amazon.com/s3/buckets/sagemaker-us-east-2-140082756605/huggingface-qlora-meta-llama-Llama-2-7b-2023-11-08-20-49-18-792/output/?region=us-east-2&tab=overview

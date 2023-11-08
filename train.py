@@ -14,7 +14,7 @@ def fine_tune(s3_path,
               pretrained_model_id="meta-llama/Llama-2-7b-hf",
               batch_size = 1, learning_rate = 2e-4,
               epochs = 20,
-              instance_type='ml.g5.4xlarge'):
+              instance_type='ml.g5.8xlarge'):
 
     sess, _, role = init_sagemaker.init_session()
 

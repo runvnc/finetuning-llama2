@@ -39,10 +39,17 @@ def init_session():
 	# retrieve the llm image uri
 	llm_image = get_huggingface_llm_image_uri(
 	  "huggingface",
-	  version="0.8.2"
+	  version="0.9.3"
 	)
+
+    #763104351884.dkr.ecr.us-west-2.amazonaws.com/huggingface-pytorch-tgi-inference:2.0.1-tgi0.9.3-gpu-py39-cu118-ubuntu20.04-v1.0
 
 	# print ecr image uri
 	print(f"llm image uri: {llm_image}")
 
 	return sess, llm_image, role
+
+if __name__ == "__main__":
+    init_session()
+
+
