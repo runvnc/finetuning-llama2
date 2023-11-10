@@ -3,31 +3,27 @@
 from termcolor import colored
 from generate_text import *
 
-def print_output(model_name, prompt, output):
+def print_output(model_name, inputs, output):
+    prompt = inputs[0][0]['content']
+    print(output)
     print(colored('Model: ', 'blue') + colored(model_name, 'green'))
     print(colored('Prompt: ', 'blue') + colored(prompt, 'yellow'))
     print(colored('Output: ', 'blue') + colored(output, 'cyan'))
     print()
 
-prompt = "Hi! I'm Jason and I am wondering what I should do today in sunny Athens."
 
-print_output('llama2-7b', prompt, generate_text('llama2-7b', prompt))
+inputs = [[{"role": "user", "content": "What are Amazon EC2 P5 instances? Which kind of GPUs are they equipped with?"}]]
 
-print_output('awsarticles24', prompt, generate_text('awsarticles24', prompt))
+print_output('llama2-13b-chat', inputs, generate_text('llama2-13b-chat', inputs))
 
-
-prompt = "Amazon EC2 P5 instances are equipped with GPUs of the type "
-
-print_output('llama2-7b', prompt, generate_text('llama2-7b', prompt))
-
-print_output('awsarticles24', prompt, generate_text('awsarticles24', prompt))
+#print_output('awsarticles24', prompt, generate_text('awsarticles24', prompt))
 
 
-prompt = "Agents for Amazon Bedrock automate the"
+#prompt = "Agents for Amazon Bedrock automate the"
 
-print_output('llama2-7b', prompt, generate_text('llama2-7b', prompt))
+#print_output('llama2-13b-chat', prompt, generate_text('llama2-13b-chat', prompt))
 
-print_output('awsarticles24', prompt, generate_text('awsarticles24', prompt))
+#print_output('awsarticles24', prompt, generate_text('awsarticles24', prompt))
 
 
 ## LLaMA2-13b-chat
