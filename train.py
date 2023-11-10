@@ -12,9 +12,9 @@ import init_sagemaker
 
 def fine_tune(s3_path,
               pretrained_model_id="meta-llama/Llama-2-7b-hf",
-              batch_size = 1, learning_rate = 2e-4,
+              batch_size = 2, learning_rate = 2e-4,
               epochs = 20,
-              instance_type='ml.g5.8xlarge'):
+              instance_type='ml.g5.12xlarge'):
 
     sess, _, role = init_sagemaker.init_session()
 
@@ -58,7 +58,7 @@ def fine_tune(s3_path,
     # retrieve the llm image uri
     llm_image = get_huggingface_llm_image_uri(
       "huggingface",
-      version="0.8.2"
+      version="0.9.3"
     )
 
     print(f"llm image uri: {llm_image}")

@@ -10,3 +10,4 @@ datasets
 langchain
 huggingface_hub
 s3fs
+bs4

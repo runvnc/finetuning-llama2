@@ -15,7 +15,7 @@ def main():
     with open(args.url_list_filename, 'r') as f:
         urls = [line.strip() for line in f]
 
-    dataset.store_url_dataset('meta-llama/Llama-2-7b-hf', args.s3_path_name, urls)
+    dataset.store_url_dataset('meta-llama/Llama-2-13b-chat-hf', args.s3_path_name, urls)
 
 if __name__ == "__main__":
     main()

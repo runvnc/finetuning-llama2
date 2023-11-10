@@ -12,7 +12,7 @@ def main():
       help='The partial path name to the S3 bucket where the dataset will be stored (off of the default bucket).')
     args = parser.parse_args()
 
-    train.fine_tune(args.s3_partial_path, 'meta-llama/Llama-2-7b-hf')
+    train.fine_tune(args.s3_partial_path, 'meta-llama/Llama-2-13b-chat-hf')
 
 if __name__ == "__main__":
     main()
