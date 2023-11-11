@@ -10,6 +10,8 @@ def print_output(model_name, inputs, output):
     print(colored('Output: ', 'blue') + colored(output, 'cyan'))
     print()
 
+# jumpstart-dft-meta-textgeneration-llama-2-13b-f-1
+
 prompt = "Please list some fun activities for a visit to San Diego. " 
 inputs = [{"role": "user", "content": prompt}]
 print_output('aws13bchatz2', inputs, generate_text('aws13bchatz2', inputs))
