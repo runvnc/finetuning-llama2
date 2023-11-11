@@ -52,6 +52,12 @@ def load_from_web(urls, model_id = "meta-llama/Llama-2-7b-hf"):
 
     data = loader.load()
 
+    print("Dataset from the following URLs:",urls)
+    print()
+    print(data)
+    print()
+    print()
+
     stripped_data = list(map(strip_spaces, data))
 
     dataset = Dataset.from_list(stripped_data)
