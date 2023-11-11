@@ -10,46 +10,28 @@ def print_output(model_name, inputs, output):
     print(colored('Output: ', 'blue') + colored(output, 'cyan'))
     print()
 
-# jumpstart-dft-meta-textgeneration-llama-2-13b-f-1
-
-prompt = "Please list some fun activities for a visit to San Diego. " 
-inputs = [{"role": "user", "content": prompt}]
-print_output('aws13bchatz2', inputs, generate_text('aws13bchatz2', inputs))
-
-
-def query_model_and_print(model_name, prompt):
+def query_model_and_print(model_name, prompt, msg_format=True):
     inputs = [{"role": "user", "content": prompt}]
-    output = generate_text(model_name, inputs)
+    output = generate_chat_response(model_name, inputs, msg_format)
     print_output(model_name, inputs, output)
 
-# Restoring the prompting of the second model with the updated model name
-query_model_and_print('jumpstart-dft-meta-textgeneration-llama-2-13b-f-1', "What are Amazon EC2 P5 instances? Which kind of GPUs are they equipped with?")
+def compare_model_outputs(prompt):
+    query_model_and_print('llama2-13b-chat', prompt, False)
+    print()
 
-prompt = "What are Amazon EC2 P5 instances? Which kind of GPUs are they equipped with? " 
-inputs = [{"role": "user", "content": prompt}]
-print_output('aws13bchatz2', inputs, generate_text('aws13bchatz2', inputs))
+    query_model_and_print('aws13bchatz2', prompt)
+    print()
 
+questions = [
+    "Please list some fun activities for a visit to San Diego.",
+    "Amazon EC2 P5 instances? Which kind of GPUs are they equipped with?",
+    "What are agents for Amazon Bedrock?",
+    "How can I create a generative AI agent using a foundational model on Amazon?",
+    "What is AWS entity resolution?",
+    "What kind of vector datastore system is available for Aurora?",
+    "How does similarity search in Amazon OpenSearch Serverless work?"
+]
 
-query_model_and_print('jumpstart-dft-meta-textgeneration-llama-2-13b-f-1', "What is Amazon Bedrock?")
-
-prompt = "What are agents for Amazon Bedrock? "
-inputs = [{"role": "user", "content": prompt}]
-print_output('aws13bchatz2', inputs, generate_text('aws13bchatz2', inputs))
-
-prompt = "How can I create a generative AI agent using a foundational model on Amazon? "
-inputs = [{"role": "user", "content": prompt}]
-print_output('aws13bchatz2', inputs, generate_text('aws13bchatz2', inputs))
-
-prompt = "What is AWS entity resolution? "
-inputs = [{"role": "user", "content": prompt}]
-print_output('aws13bchatz2', inputs, generate_text('aws13bchatz2', inputs))
-
-prompt = "What kind of vector datastore system is available for Aurora? "
-inputs = [{"role": "user", "content": prompt}]
-print_output('aws13bchatz2', inputs, generate_text('aws13bchatz2', inputs))
-
-prompt = "How does similarity search in Amazon OpenSearch Serverless work? "
-inputs = [{"role": "user", "content": prompt}]
-print_output('aws13bchatz2', inputs, generate_text('aws13bchatz2', inputs))
-
+for question in questions:
+    compare_model_outputs(question)
 

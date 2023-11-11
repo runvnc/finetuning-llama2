@@ -3,7 +3,7 @@
 # Note: assuming I can fix the cut off text thing. haven't looked into it.
 
 from termcolor import colored
-from generate_text import generate_text
+from generate_text import generate_chat_response
 
 
 def chat_loop():
@@ -18,7 +18,7 @@ def chat_loop():
 
             inputs.append({"role": "user", "content": user_input })
 
-            model_response = generate_text('aws13bchatz2', inputs)
+            model_response = generate_chat_response('aws13bchatz2', inputs)
 
             inputs.append({"role": "assistant", "content": model_response})
 
