@@ -17,20 +17,20 @@ inputs = [{"role": "user", "content": prompt}]
 print_output('aws13bchatz2', inputs, generate_text('aws13bchatz2', inputs))
 
 
-#prompt = "What are Amazon EC2 P5 instances? Which kind of GPUs are they equipped with?" 
+def query_model_and_print(model_name, prompt):
+    inputs = [{"role": "user", "content": prompt}]
+    output = generate_text(model_name, inputs)
+    print_output(model_name, inputs, output)
 
-#inputs = [[{"role": "user", "content": prompt}]]
-
-#print_output('llama2-13b-chat', inputs, generate_text('llama2-13b-chat', inputs))
+# Restoring the prompting of the second model with the updated model name
+query_model_and_print('jumpstart-dft-meta-textgeneration-llama-2-13b-f-1', "What are Amazon EC2 P5 instances? Which kind of GPUs are they equipped with?")
 
 prompt = "What are Amazon EC2 P5 instances? Which kind of GPUs are they equipped with? " 
 inputs = [{"role": "user", "content": prompt}]
 print_output('aws13bchatz2', inputs, generate_text('aws13bchatz2', inputs))
 
 
-#prompt = "What is Amazon Bedrock?"
-#inputs = [[{"role": "user", "content": prompt}]]
-#print_output('llama2-13b-chat', inputs, generate_text('llama2-13b-chat', inputs))
+query_model_and_print('jumpstart-dft-meta-textgeneration-llama-2-13b-f-1', "What is Amazon Bedrock?")
 
 prompt = "What are agents for Amazon Bedrock? "
 inputs = [{"role": "user", "content": prompt}]
