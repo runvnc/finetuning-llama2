@@ -7,8 +7,8 @@ from sagemaker.huggingface import HuggingFaceModel
 
 import init_sagemaker
  
-def deploy_tgi_model_from_url(model_data, endpoint_name, instance_type = "ml.g5.2xlarge",
-          number_of_gpu = 1, health_check_timeout = 300):
+def deploy_tgi_model_from_url(model_data, endpoint_name, instance_type = "ml.g5.12xlarge",
+          number_of_gpu = 4, health_check_timeout = 300):
 
     (sess, llm_image, role) = init_sagemaker.init_session()
     

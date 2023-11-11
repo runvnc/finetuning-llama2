@@ -18,6 +18,8 @@ def fine_tune(s3_path,
 
     sess, _, role = init_sagemaker.init_session()
 
+    print("pretrained model id = ", pretained_model_id)
+
     job_name = f'huggingface-qlora-{pretrained_model_id.replace("/", "-")}-{time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())}'
 
     hyperparameters ={
@@ -28,7 +30,9 @@ def fine_tune(s3_path,
       'lr': learning_rate,                              # learning rate used during training
       'hf_token': HfFolder.get_token(),                 # huggingface token to access llama 2
       'merge_weights': True,                            # wether to merge LoRA into the model (needs more memory)
-    }
+      'nproc_per_node': 4
+      }
+    # nproc_per_node=4 ? (4 GPU?)
 
     huggingface_estimator = HuggingFace(
         entry_point          = 'run_clm.py',      # train script
@@ -42,7 +46,7 @@ def fine_tune(s3_path,
         pytorch_version      = '2.0',             # the pytorch_version version used in the training job
         py_version           = 'py310',           # the python version used in the training job
         hyperparameters      =  hyperparameters,  # the hyperparameters passed to the training job
-        environment          = { "HUGGINGFACE_HUB_CACHE": "/tmp/.cache" }, # set env variable to cache models in /tmp
+        environment          = { "HUGGINGFACE_HUB_CACHE": "/tmp/.cache", "CUDA_VISIBLE_DEVICES": "0,1,2,3" }, # set env variable to cache models in /tmp
     )
 
     # define a data input dictonary with our uploaded s3 uris

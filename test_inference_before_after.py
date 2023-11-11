@@ -5,30 +5,28 @@ from generate_text import *
 
 def print_output(model_name, inputs, output):
     prompt = inputs[0][0]['content']
-    print(output)
     print(colored('Model: ', 'blue') + colored(model_name, 'green'))
     print(colored('Prompt: ', 'blue') + colored(prompt, 'yellow'))
     print(colored('Output: ', 'blue') + colored(output, 'cyan'))
     print()
 
+prompt = "What are Amazon EC2 P5 instances? Which kind of GPUs are they equipped with?" 
 
-inputs = [[{"role": "user", "content": "What are Amazon EC2 P5 instances? Which kind of GPUs are they equipped with?"}]]
+inputs = [[{"role": "user", "content": prompt}]]
 
 print_output('llama2-13b-chat', inputs, generate_text('llama2-13b-chat', inputs))
 
-#print_output('awsarticles24', prompt, generate_text('awsarticles24', prompt))
+prompt = "<s> [INST] What are Amazon EC2 P5 instances? Which kind of GPUs are they equipped with? [/INST]" 
+print_output('aws13bchat3', inputs, generate_text('aws13bchat3', prompt))
 
 
-#prompt = "Agents for Amazon Bedrock automate the"
+prompt = "What is Amazon Bedrock?"
+inputs = [[{"role": "user", "content": prompt}]]
+print_output('llama2-13b-chat', inputs, generate_text('llama2-13b-chat', inputs))
 
-#print_output('llama2-13b-chat', prompt, generate_text('llama2-13b-chat', prompt))
+prompt = "<s> [INST] What is Amazon Bedrock? [/INST]"
+print_output('aws13bchat3', inputs, generate_text('aws13bchat3', prompt))
 
-#print_output('awsarticles24', prompt, generate_text('awsarticles24', prompt))
-
-
-## LLaMA2-13b-chat
-#prompt = "What are Amazon EC2 P5 instances? Which kind of GPUs are they equipped with?"
-# ## LLaMA2-13b-chat finetuned on NYC summit blogs
-#prompt = "<s> [INST] What are Amazon EC2 P5 instances? Which kind of GPUs are they equipped with? [/INST]"
-
+prompt = "<s> [INST] How can I create a generative AI agent using a foundational model on Amazon? [/INST]"
+print_output('aws13bchat3', inputs, generate_text('aws13bchat3', prompt))
 
