@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Note: this doesn't work yet. will fix after sleep period.
+# Note: assuming I can fix the cut off text thing. haven't looked into it.
 
 from termcolor import colored
 from generate_text import generate_text
@@ -22,7 +22,6 @@ def chat_loop():
 
             inputs.append({"role": "assistant", "content": model_response})
 
-            print(inputs)
             print(colored('AI: ', 'green') + colored(model_response, 'green'))
             print()
 
