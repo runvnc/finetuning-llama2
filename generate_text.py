@@ -29,10 +29,9 @@ def generate_text(model, inputs):
     result = query_endpoint( {"inputs": inputs,
         "parameters": {
             "max_new_tokens": 200,
-            "temperature": 0.01,
-            "top_p": 0.9,
+            "temperature": 0.001,
             "return_full_text": True }
-        }, 
+        }, # top_0: 0.9 
         endpoint)
     if 'generation' in result[0]:
         # 0.8.2

@@ -11,14 +11,14 @@ import init_sagemaker
 
 
 def fine_tune(s3_path,
-              pretrained_model_id="meta-llama/Llama-2-7b-hf",
-              batch_size = 2, learning_rate = 2e-4,
+              pretrained_model_id="meta-llama/Llama-2-13b-chat-hf",
+              batch_size = 1, learning_rate = 2e-4,
               epochs = 20,
               instance_type='ml.g5.12xlarge'):
 
     sess, _, role = init_sagemaker.init_session()
 
-    print("pretrained model id = ", pretained_model_id)
+    print("pretrained model id = ", pretrained_model_id)
 
     job_name = f'huggingface-qlora-{pretrained_model_id.replace("/", "-")}-{time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())}'
 
