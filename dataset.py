@@ -4,7 +4,7 @@ import time
 import json
 
 from datasets import Dataset
-from langchain.document_loaders import WebBaseLoader
+from langchain.document_loaders import WebBaseLoader, DirectoryLoader
 from random import randint
 from itertools import chain
 from functools import partial
@@ -17,7 +17,7 @@ import init_sagemaker
 def strip_spaces(doc):
     return {"text": doc.page_content.replace("  ", "")}
 
-def chunk(sample, chunk_length=2048):
+def chunk(sample, chunk_length=512):
     # define global remainder variable to save remainder from batches to use in next batch
     global remainder
 
@@ -46,6 +46,12 @@ def sum_dataset_arrays(lm_dataset):
     for i in range(0,8):
         total = total + len(lm_dataset[i]['input_ids'])
     return total
+
+def load_from_dir(path, glob):
+    DirectoryLoader('../', glob="**/*.md")
+    docs = loader.load()
+         
+
 
 def load_from_web(urls, model_id = "meta-llama/Llama-2-7b-hf"):
     loader = WebBaseLoader(urls)

@@ -162,23 +162,21 @@ def training_function(args):
     set_seed(args.seed)
 
     dataset = load_from_disk(args.dataset_path)
-
     # load model from the hub with a bnb config
-    #bnb_config = BitsAndBytesConfig(
-    #    load_in_4bit=True,
-    #    bnb_4bit_use_double_quant=True,
-    #    bnb_4bit_quant_type="nf4",
-    #    bnb_4bit_compute_dtype=torch.bfloat16,
-    #)
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16,
+    )
 
     model = AutoModelForCausalLM.from_pretrained(
         args.model_id,
-        load_in_8bit=True,
         use_cache=False
         if args.gradient_checkpointing
         else True,  # this is needed for gradient checkpointing
         device_map="auto",
-    #    quantization_config=bnb_config,
+        quantization_config=bnb_config,
     )
 
     # create peft config
@@ -216,7 +214,7 @@ def training_function(args):
     sagemaker_save_dir="/opt/ml/model/"
     if args.merge_weights:
         # merge adapter weights with base model and save
-        # save int 8 model
+        # save int 4 model
         trainer.model.save_pretrained(output_dir, safe_serialization=False)
         # clear memory
         del model

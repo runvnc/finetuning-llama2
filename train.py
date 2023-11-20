@@ -29,7 +29,7 @@ def fine_tune(s3_path,
       'per_device_train_batch_size': batch_size,        # batch size for training
       'lr': learning_rate,                              # learning rate used during training
       'hf_token': HfFolder.get_token(),                 # huggingface token to access llama 2
-      'merge_weights': True,                            # wether to merge LoRA into the model (needs more memory)
+      'merge_weights': False,                           # wether to merge LoRA into the model (needs more memory)
       'nproc_per_node': 4
       }
     # nproc_per_node=4 ? (4 GPU?)
