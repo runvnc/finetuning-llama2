@@ -6,6 +6,16 @@ import json
 from sagemaker.huggingface import HuggingFaceModel
 
 import init_sagemaker
+
+def stop_endpoint(endpoint_name):
+    """
+    Stops a SageMaker endpoint and deletes the associated resources.
+
+    :param endpoint_name: The name of the endpoint to stop.
+    """
+    sagemaker_client = boto3.client('sagemaker')
+    sagemaker_client.delete_endpoint(EndpointName=endpoint_name)
+    print(f"Endpoint {endpoint_name} has been stopped and deleted.")
  
 def deploy_tgi_model_from_url(model_data, endpoint_name, instance_type = "ml.g5.12xlarge",
           number_of_gpu = 4, health_check_timeout = 300):
