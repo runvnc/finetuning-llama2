@@ -17,7 +17,8 @@ def deploy_tgi_model_from_url(model_data, endpoint_name, instance_type = "ml.g5.
         'SM_NUM_GPUS': json.dumps(number_of_gpu), # Number of GPU used per replica
         'MAX_INPUT_LENGTH': json.dumps(1024), 
         'MAX_TOTAL_TOKENS': json.dumps(2048),
-        'MAX_BATCH_TOTAL_TOKENS': json.dumps(4096)
+        'MAX_BATCH_TOTAL_TOKENS': json.dumps(4096),
+        'PREDIBASE_MODEL_BUCKET': json.dumps(sess.default_bucket())
         }
     # 'HF_MODEL_QUANTIZE': "bitsandbytes", # comment in to quantize
 	
