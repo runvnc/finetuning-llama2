@@ -13,17 +13,15 @@ from transformers import AutoTokenizer
 from sagemaker.huggingface import HuggingFace, HuggingFaceModel
 from huggingface_hub import HfFolder
 
-#SAGEMAKER_ROLE = 'AmazonSageMaker-ExecutionRole-20231110T150746'
 SAGEMAKER_ROLE = 'AmazonSageMaker-ExecutionRole-20230915T195621'
 
-def init_session():
+def init_session(image_type = "sagemaker"):
     sess = sagemaker.Session()
 
     # sagemaker session bucket -> used for uploading data, models and logs
     # sagemaker will automatically create this bucket if it not exists
     sagemaker_session_bucket=None
     if sagemaker_session_bucket is None and sess is not None:
-        # set to default bucket if a bucket name is not given
         sagemaker_session_bucket = sess.default_bucket()
     try:
         #role = sagemaker.get_execution_role()
@@ -40,13 +38,16 @@ def init_session():
 
     from sagemaker.huggingface import get_huggingface_llm_image_uri
 
-    # retrieve the llm image uri
-    llm_image = get_huggingface_llm_image_uri(
-      "huggingface",
-      version="0.9.3"
-    )
+    if which == "sagemaker":
+        llm_image = get_huggingface_llm_image_uri(
+            "huggingface",
+            version="0.9.3"
+        )
+    else if which == "lorax":
+        llm_image = "ghcr.io/predibase/lorax:latest"
+    else:
+        raise ValueError("Invalid image type.")
 
-    # print ecr image uri
     print(f"llm image uri: {llm_image}")
 
     return sess, llm_image, role

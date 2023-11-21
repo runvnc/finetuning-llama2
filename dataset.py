@@ -47,15 +47,16 @@ def sum_dataset_arrays(lm_dataset):
         total = total + len(lm_dataset[i]['input_ids'])
     return total
 
-def load_from_dir(path, glob):
-    DirectoryLoader('../', glob="**/*.md")
-    docs = loader.load()
-         
 
+def load_from_dir(path, glob="**/*"):
+    loader = DirectoryLoader(path, glob)
+    return process(loader)
 
 def load_from_web(urls, model_id = "meta-llama/Llama-2-7b-hf"):
     loader = WebBaseLoader(urls)
+    return process(loader)
 
+def process(loader):
     data = loader.load()
 
     print("Dataset from the following URLs:",urls)
@@ -96,6 +97,14 @@ def store_url_dataset(pretrained_model_id, s3_path, urls):
     remainder = {"input_ids": [], "attention_mask": [], "token_type_ids": []}
 
     dataset = load_from_web(urls, pretrained_model_id)
+    (sess, llm_image, role)  = init_sagemaker.init_session()
+    store_dataset(sess, dataset, s3_path)
+
+def store_docs_dataset(pretrained_model_id, s3_path, docs_path):
+    global remainder
+    remainder = {"input_ids": [], "attention_mask": [], "token_type_ids": []}
+
+    dataset = load_from_dir(urls, pretrained_model_id)
     (sess, llm_image, role)  = init_sagemaker.init_session()
     store_dataset(sess, dataset, s3_path)
 
